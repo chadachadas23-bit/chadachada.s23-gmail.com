@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Stock Inventory Dashboard</title>
+<style>
+:root{--navy:#14243a;--blue:#2563eb;--orange:#f97316;--bg:#f3f6fb;--ink:#182334;--muted:#64748b;--line:#e2e8f0}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.45 Inter,"Noto Sans Thai",Tahoma,Arial,sans-serif}
+header{background:linear-gradient(115deg,#14243a,#203d61);color:white;padding:24px clamp(16px,3vw,38px)}
+.headerrow{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap}.eyebrow{color:#b8c7da;font-size:12px;letter-spacing:.12em;text-transform:uppercase}
+h1{margin:5px 0;font-size:clamp(23px,3vw,32px)}header p{margin:4px 0 0;color:#d4dfed}.stamp{border:1px solid #60758f;border-radius:10px;padding:10px 14px;color:#eaf1fa;font-size:12px}
+main{max-width:1500px;margin:auto;padding:22px clamp(12px,2.5vw,32px) 40px}.notice{background:#fff7ed;border:1px solid #fed7aa;color:#9a3412;padding:12px 14px;border-radius:12px;margin-bottom:16px}
+.kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}.card{background:white;border:1px solid var(--line);border-radius:15px;padding:17px;box-shadow:0 2px 8px #0f172a05}.klabel{color:var(--muted);font-size:12px}.kval{font-size:clamp(23px,2.4vw,32px);font-weight:750;letter-spacing:-.03em;margin:6px 0}.ksub{font-size:12px;color:var(--muted)}.blue{color:var(--blue)}.orange{color:var(--orange)}
+.layout{display:grid;grid-template-columns:1.15fr .85fr;gap:14px;margin-top:14px}.sectiontitle{font-size:16px;font-weight:750;margin:0 0 13px}.chart{display:flex;flex-direction:column;gap:11px}.barrow{display:grid;grid-template-columns:minmax(85px,145px) 1fr 90px;gap:10px;align-items:center}.barname{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.track{height:10px;border-radius:20px;background:#edf1f7;overflow:hidden}.fill{height:100%;border-radius:20px;background:linear-gradient(90deg,#2563eb,#60a5fa)}.barvalue{text-align:right;font-variant-numeric:tabular-nums;font-size:12px;color:#475569}
+.filters{margin-top:14px}.filtergrid{display:grid;grid-template-columns:2fr 1fr 1fr 1fr auto;gap:10px}.field label{display:block;color:var(--muted);font-size:12px;margin:0 0 5px}.field input,.field select{width:100%;min-width:0;border:1px solid #cbd5e1;background:white;border-radius:9px;padding:10px;font:inherit;color:var(--ink)}button{border:0;background:var(--navy);color:white;padding:10px 15px;border-radius:9px;font:inherit;cursor:pointer;align-self:end}button.secondary{background:#e8eef6;color:#1e293b}
+.tablewrap{overflow:auto;margin-top:12px;border:1px solid var(--line);border-radius:12px}table{border-collapse:collapse;width:100%;min-width:900px;background:white}th{position:sticky;top:0;background:#f8fafc;text-align:left;font-size:12px;color:#475569;white-space:nowrap}td,th{padding:11px 12px;border-bottom:1px solid #edf1f5}tbody tr:hover{background:#f8fbff}.num{text-align:right;font-variant-numeric:tabular-nums}.pill{display:inline-block;border-radius:99px;padding:3px 8px;font-size:11px;background:#e0f2fe;color:#075985}.pill.zero{background:#fee2e2;color:#991b1b}.pill.low{background:#ffedd5;color:#9a3412}.pagination{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;padding:12px 2px;color:var(--muted)}.pagination button{padding:7px 11px}.foot{margin-top:16px;color:var(--muted);font-size:12px}.empty{text-align:center;color:var(--muted);padding:28px}
+@media(max-width:900px){.kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.layout{grid-template-columns:1fr}.filtergrid{grid-template-columns:1fr 1fr}.field.search{grid-column:1/-1}.filtergrid button{align-self:end}}
+@media(max-width:500px){.filtergrid{grid-template-columns:1fr}.field.search{grid-column:auto}.barrow{grid-template-columns:90px 1fr 70px}.kval{font-size:24px}}
+</style>
+</head>
+<body>
+<header><div class="headerrow"><div><div class="eyebrow">Inventory intelligence</div><h1>Stock Inventory Dashboard</h1><p>ภาพรวมสินค้าคงเหลือ แยกตามแบรนด์ รุ่น และสาขา</p></div><div class="stamp">ข้อมูลจากรายงาน Stock จริง<br><strong id="reportDate">กำลังโหลดข้อมูล…</strong></div></div></header>
+<main>
+<div class="notice"><strong>หมายเหตุ:</strong> แบรนด์ถูกจัดกลุ่มจากชื่อสินค้าโดยอัตโนมัติ รายการที่ระบุแบรนด์ไม่ได้จะแสดงเป็น “ไม่ระบุแบรนด์” กรุณาตรวจสอบก่อนใช้ประกอบการสั่งซื้อ</div>
+<section class="kpis">
+<div class="card"><div class="klabel">NET STOCK รวม</div><div class="kval blue" id="kStock">—</div><div class="ksub">หน่วยตามรายงานต้นทาง</div></div>
+<div class="card"><div class="klabel">จำนวนสาขา</div><div class="kval" id="kBranches">—</div><div class="ksub">รหัสสาขาไม่ซ้ำ</div></div>
+<div class="card"><div class="klabel">รายการสินค้าใกล้หมด</div><div class="kval orange" id="kLow">—</div><div class="ksub">NET Stock มากกว่า 0 และไม่เกิน 5</div></div>
+<div class="card"><div class="klabel">รายการสินค้าหมด</div><div class="kval" id="kZero">—</div><div class="ksub">NET Stock เท่ากับ 0</div></div>
+</section>
+<section class="layout">
+<div class="card"><h2 class="sectiontitle">NET Stock ตามแบรนด์</h2><div id="brandChart" class="chart">กำลังคำนวณ…</div></div>
+<div class="card"><h2 class="sectiontitle">สาขาที่มี NET Stock สูงสุด</h2><div id="branchChart" class="chart">กำลังคำนวณ…</div></div>
+</section>
+<section class="card filters">
+<h2 class="sectiontitle">ค้นหาและกรองสินค้า</h2>
+<div class="filtergrid">
+<div class="field search"><label for="search">ค้นหาชื่อสินค้า / รหัสสินค้า / สาขา</label><input id="search" placeholder="พิมพ์คำค้นหา…" autocomplete="off"></div>
+<div class="field"><label for="brand">แบรนด์</label><select id="brand"><option value="">ทุกแบรนด์</option></select></div>
+<div class="field"><label for="branch">สาขา</label><select id="branch"><option value="">ทุกสาขา</option></select></div>
+<div class="field"><label for="stockState">สถานะ Stock</label><select id="stockState"><option value="">ทุกสถานะ</option><option value="zero">หมด Stock (0)</option><option value="low">ใกล้หมด (1–5)</option><option value="available">มี Stock มากกว่า 5</option></select></div>
+<button id="reset" class="secondary">ล้างตัวกรอง</button>
+</div>
+<div class="pagination"><span id="resultCount">กำลังโหลดข้อมูล…</span><span>แสดง <select id="pageSize" style="padding:6px;border:1px solid #cbd5e1;border-radius:7px"><option>25</option><option>50</option><option>100</option></select> รายการต่อหน้า</span></div>
+<div class="tablewrap"><table><thead><tr><th>รหัสสาขา</th><th>ชื่อสาขา</th><th>แบรนด์ (จัดกลุ่ม)</th><th>รหัสสินค้า</th><th>ชื่อสินค้า</th><th class="num">Balance</th><th class="num">Reserve</th><th class="num">Net Balance</th><th>สถานะ</th></tr></thead><tbody id="rows"></tbody></table></div>
+<div class="pagination"><span id="pageInfo"></span><span><button id="prev" class="secondary">ก่อนหน้า</button> <button id="next">ถัดไป</button></span></div>
+</section>
+<div class="foot">ที่มา: stock_balance_summary_by_product_report • ตัวเลขอ้างอิงคอลัมน์ NET_BALANCE จากไฟล์ต้นทาง • กราฟสรุปตามรายการในไฟล์ • Dashboard ทำงานในเบราว์เซอร์</div>
+</main>
+<script>
+let DATA=[];
+const fmt=n=>Number(n||0).toLocaleString('th-TH',{maximumFractionDigits:2});
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function aggregate(key, rows){const m=new Map();rows.forEach(r=>m.set(r[key]||'ไม่ระบุ', (m.get(r[key]||'ไม่ระบุ')||0)+Number(r.net||0)));return [...m].sort((a,b)=>b[1]-a[1]);}
+function drawBars(target, pairs, total, max=8){const arr=pairs.slice(0,max);$(target).innerHTML=arr.map(([name,val])=>`<div class="barrow"><div class="barname" title="${esc(name)}">${esc(name)}</div><div class="track"><div class="fill" style="width:${Math.max(0,Math.min(100,total?val/total*100:0))}%"></div></div><div class="barvalue">${fmt(val)}</div></div>`).join('')||'<div class="empty">ไม่มีข้อมูล</div>';}
+function init(){
+  $('reportDate').textContent='อัปโหลดรายงานวันที่ 23 ต.ค. 2026';
+  $('kStock').textContent=fmt(DATA.reduce((s,r)=>s+r.net,0));
+  $('kBranches').textContent=fmt(new Set(DATA.map(r=>r.shopCode)).size);
+  $('kLow').textContent=fmt(DATA.filter(r=>r.net>0&&r.net<=5).length);
+  $('kZero').textContent=fmt(DATA.filter(r=>r.net===0).length);
+  const brands=[...new Set(DATA.map(r=>r.brand))].sort((a,b)=>a.localeCompare(b,'th'));
+  const branches=[...new Map(DATA.map(r=>[r.shopCode,r.shop])).entries()].sort((a,b)=>a[1].localeCompare(b[1],'th'));
+  brands.forEach(v=>$('brand').add(new Option(v,v)));
+  branches.forEach(([code,name])=>$('branch').add(new Option(`${name} (${code})`,code)));
+  drawBars('brandChart',aggregate('brand',DATA),DATA.reduce((s,r)=>s+r.net,0),10);
+  drawBars('branchChart',aggregate('shop',DATA),DATA.reduce((s,r)=>s+r.net,0),8);
+  render();
+}
+let page=1;
+function filtered(){
+ const q=$('search').value.trim().toLocaleLowerCase('th');
+ const b=$('brand').value, br=$('branch').value, st=$('stockState').value;
+ return DATA.filter(r=>{
+  if(b&&r.brand!==b)return false;if(br&&r.shopCode!==br)return false;
+  if(st==='zero'&&r.net!==0)return false;if(st==='low'&&!(r.net>0&&r.net<=5))return false;if(st==='available'&&r.net<=5)return false;
+  if(q&&!`${r.shopCode} ${r.shop} ${r.code} ${r.name} ${r.brand}`.toLocaleLowerCase('th').includes(q))return false;
+  return true;
+ });
+}
+function render(){
+ const arr=filtered(), size=Number($('pageSize').value||25), pages=Math.max(1,Math.ceil(arr.length/size));page=Math.min(page,pages);
+ $('resultCount').textContent=`พบ ${fmt(arr.length)} รายการ`;
+ $('pageInfo').textContent=`หน้า ${page} จาก ${pages}`;
+ $('prev').disabled=page<=1;$('next').disabled=page>=pages;
+ const chunk=arr.slice((page-1)*size,page*size);
+ $('rows').innerHTML=chunk.map(r=>{
+  let status=r.net===0?'<span class="pill zero">หมด Stock</span>':r.net<=5?'<span class="pill low">ใกล้หมด</span>':'<span class="pill">มี Stock</span>';
+  return `<tr><td>${esc(r.shopCode)}</td><td title="${esc(r.shop)}">${esc(r.shop)}</td><td>${esc(r.brand)}</td><td>${esc(r.code)}</td><td>${esc(r.name)}</td><td class="num">${fmt(r.balance)}</td><td class="num">${fmt(r.reserve)}</td><td class="num"><strong>${fmt(r.net)}</strong></td><td>${status}</td></tr>`;
+ }).join('')||'<tr><td colspan="9" class="empty">ไม่พบข้อมูลตามตัวกรอง</td></tr>';
+}
+['search','brand','branch','stockState','pageSize'].forEach(id=>$(id).addEventListener(id==='search'?'input':'change',()=>{page=1;render()}));
+$('reset').addEventListener('click',()=>{$('search').value='';$('brand').value='';$('branch').value='';$('stockState').value='';page=1;render()});
+$('prev').addEventListener('click',()=>{page--;render()});$('next').addEventListener('click',()=>{page++;render()});
+fetch('./stock-data.json').then(r=>{if(!r.ok)throw Error('โหลด stock-data.json ไม่สำเร็จ');return r.json()}).then(d=>{DATA=d;init()}).catch(e=>{document.querySelector('main').innerHTML='<div class="notice">ไม่สามารถโหลดข้อมูลได้: '+esc(e.message)+'<br>กรุณาเก็บ index.html และ stock-data.json ไว้ในโฟลเดอร์เดียวกัน</div>'});
+</script>
+</body></html>
