@@ -346,8 +346,8 @@ rk.slice(0,3).forEach(r=>li(r,'perf-top'));rk.slice(-3).reverse().forEach(r=>li(
 // heat colors
 const heat=v=>v>=.85?'#63be7b':v>=.75?'#a9d27f':v>=.65?'#e9e583':v>=.55?'#fdd17f':v>=.45?'#f8a170':'#f8696b';
 const tbl=document.getElementById('t-perf');const th=el('thead');const hr=el('tr');
-const H=['REGION','AREA','TG Nov','%Con Target','ACT Nov 1–22','%Con Actual','%ACH','GAP','ACT Oct 1–22','MoM','%MoM','RR Rev','%RR','Rank'];H.unshift(H.pop());
-H.forEach((h,i)=>{const c=el('th',i<2?'':'',h);if(i===2)c.className='name';tbl;hr.appendChild(c);});th.appendChild(hr);tbl.appendChild(th);
+const H=['REGION','AREA','TG Nov','%Con Target','ACT Nov 1–22','%Con Actual','%ACH','GAP','ACT Oct 1–22','MoM','%MoM','RR Rev','%RR','Rank'];
+H.forEach((h,i)=>{const c=el('th',i<2?'':'',h);if(i===1)c.className='name';tbl;hr.appendChild(c);});th.appendChild(hr);tbl.appendChild(th);
 const tb=el('tbody');
 const cells=(tr,r,tot)=>{
   const add=(t,cls,bg)=>{const c=el('td',cls||'',t);if(bg)c.style.background=bg;tr.appendChild(c);return c;};
@@ -355,8 +355,8 @@ const cells=(tr,r,tot)=>{
   add(pc(r.ach),'ach',tot?'':heat(r.ach));add(nf.format(r.gap),'',tot?'':'#fde2e2');add(nf.format(r.oct));
   add(sg(r.mom),r.mom>=0?'up':'dn',tot?'':(r.mom>=0?'#e2f4e8':'#fde2e2'));add((r.momp>=0?'▲ ':'▼ ')+pc(Math.abs(r.momp),0),r.momp>=0?'up':'dn');
   add(nf.format(Math.round(r.rr)));add(pc(r.rrp,1),'ach',tot?'':heat(r.rrp*0.75));};
-rk.forEach(r=>{const tr=el('tr');const rc=el('td','rkc',String(r.rank));tr.append(rc);tr.append(el('td','rg',r.rg));const n=el('td','name',r.ar);tr.append(n);cells(tr,r,false);tb.appendChild(tr);});
-const tt=el('tr','tot');const g=el('td','name','Grand Total');g.colSpan=3;tt.append(g);cells(tt,T,true);tb.appendChild(tt);
+rk.forEach(r=>{const tr=el('tr');tr.append(el('td','rg',r.rg));const n=el('td','name',r.ar);tr.append(n);cells(tr,r,false);tr.append(el('td','rkc',String(r.rank)));tb.appendChild(tr);});
+const tt=el('tr','tot');const g=el('td','name','Grand Total');g.colSpan=2;tt.append(g);cells(tt,T,true);tt.append(el('td',''));tb.appendChild(tt);
 tbl.appendChild(tb);
 })();
 </script>
