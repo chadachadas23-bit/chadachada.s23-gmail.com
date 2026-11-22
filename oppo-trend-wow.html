@@ -36,6 +36,22 @@ body{margin:0;background:var(--bg);color:var(--ink);font:13px/1.45 "Noto Sans Th
 .kpi.sm{padding:10px 11px;background:#fbfdfc}
 .kpi.sm .rh{font-size:13.5px;color:var(--ink)}
 .kpi.sm .rrow .big{font-size:13.5px}
+.asof{font-size:12px;color:var(--muted)}
+.pk{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin-bottom:12px}
+.pk .kpi{padding:10px 14px}
+.pk .kpi .v{font-size:22px}
+.tb2{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:10px;margin-bottom:12px}
+.tbbox{border:1px solid var(--line);border-radius:12px;padding:10px 14px}
+.tbbox.top{background:#effaf3;border-color:#bfe3cc}.tbbox.bot{background:#fff4f2;border-color:#f3cdc6}
+.tbh{font-weight:700;margin-bottom:4px}
+.tbbox ol{margin:0;padding-left:20px}.tbbox li{padding:2px 0}
+.tbbox li b{float:right;font-variant-numeric:tabular-nums}
+.tbbox li small{color:var(--muted);margin-left:6px}
+table.t.perf{min-width:1080px;font-size:12.5px}
+table.t.perf td,table.t.perf th{padding:6px 7px}
+table.t.perf th.name,table.t.perf td.name{min-width:170px;position:static}
+table.t.perf td.rg{font-weight:700;text-align:center;color:#146c3e}
+table.t.perf td.ach{font-weight:700}
 .kpi .l{font-size:12px;color:var(--muted)}
 .kpi .v{font-size:26px;font-weight:700;margin-top:2px}
 .kpi .s{font-size:12.5px;margin-top:2px}
@@ -87,9 +103,19 @@ table.t td.gs{border-left:1px solid var(--line)}
 
   <div class="banner"><span class="tag">HANDSET</span><span>Trend ยอดขาย WoW · Sub = QTY (เครื่อง) · Rev = All Net (บาท) · Week = จันทร์–อาทิตย์ · Week-1 = สัปดาห์ก่อนหน้า · กดที่ชื่อ Area เพื่อดูรายสาขา · กดที่กลุ่มสินค้าเพื่อดูราย Model</span></div>
 
+  <div class="card" id="sec-perf">
+    <div class="sechead"><h2>🎯 Performance vs Target · Brand OPPO</h2><span class="asof">Data as of 1–22 พ.ย. 2026 · Revenue (บาท)</span></div>
+    <div class="pk" id="perf-kpis"></div>
+    <div class="tb2">
+      <div class="tbbox top"><div class="tbh">✅ Top Performance</div><ol id="perf-top"></ol></div>
+      <div class="tbbox bot"><div class="tbh">🔥 Area Bottom</div><ol id="perf-bot"></ol></div>
+    </div>
+    <div class="tscroll"><table class="t perf" id="t-perf"></table></div>
+    <div class="note">ที่มา: ตาราง Performance by Area (TG / ACT Nov 1–22 / ACT Oct 1–22) ที่ส่งมาเมื่อ 22 พ.ย. · RR Rev = ACT ÷ 22 × 30 · %RR = RR Rev ÷ Target · Rank เรียงตาม %ACH</div>
+  </div>
   <div class="kpis" id="kpis"></div>
   <div class="card" id="sec-region">
-    <div class="sechead"><h2>📍 Trend WoW By Region / Area</h2>
+    <div class="sechead"><h2>📍 Trend WoW By Region / Area <span class="asof">· ข้อมูลถึง 15 พ.ย.</span></h2>
       <div><button class="btn" data-exp="region">ขยายทุก Area</button> <button class="btn" data-col="region">ย่อทั้งหมด</button></div></div>
     <div class="tscroll"><table class="t compact" id="t-region"></table></div>
   </div>
@@ -270,6 +296,48 @@ document.querySelectorAll('[data-col]').forEach(b=>b.onclick=()=>{state.open[b.d
 // rows: [date,brand,area,shop,pc,typ,model,sub,cat,qty]
 render();
 let rt;window.addEventListener('resize',()=>{clearTimeout(rt);rt=setTimeout(()=>daily(lastRows),150);});
+</script>
+
+<script>
+(function(){
+const PERF=[
+['BMA','BMA I - North West',3809814,2169481,2345199],['BMA','BMA II - South West',2767508,1406800,2109271],['BMA','BMA III - North East',3312098,2601395,2503208],['BMA','BMA IV - South East',3276768,2784716,2533524],['BMA','BMA V - Central',2220874,1275505,1345031],
+['UPC I','UPC - Central Northeast',3381899,2061808,2312157],['UPC I','UPC - Lower North',1354823,547941,714259],['UPC I','UPC - Lower Northeast',4543494,3066100,3020464],['UPC I','UPC - Upper North',1836126,1142241,1160299],['UPC I','UPC - Upper Northeast',3817353,2042137,2454556],
+['UPC II','UPC - Central',2116681,2066041,1611169],['UPC II','UPC - East',3005104,2187446,2052333],['UPC II','UPC - Lower South',1931368,1060732,1190289],['UPC II','UPC - Upper South',2468410,1480441,1629324],['UPC II','UPC - West',2517987,1422102,1569376]];
+const DAYS=22,MDAYS=30,TG_TOTAL=42360306;
+const nf=new Intl.NumberFormat('en-US');
+const rows=PERF.map(([rg,ar,tg,act,oct])=>({rg,ar,tg,act,oct,ach:act/tg,gap:tg-act,mom:act-oct,momp:(act-oct)/oct,rr:act/DAYS*MDAYS}));
+rows.forEach(r=>r.rrp=r.rr/r.tg);
+const T={tg:TG_TOTAL,act:rows.reduce((a,r)=>a+r.act,0),oct:rows.reduce((a,r)=>a+r.oct,0)};
+T.ach=T.act/T.tg;T.gap=T.tg-T.act;T.mom=T.act-T.oct;T.momp=T.mom/T.oct;T.rr=T.act/DAYS*MDAYS;T.rrp=T.rr/T.tg;
+const rk=[...rows].sort((a,b)=>b.ach-a.ach);rk.forEach((r,i)=>r.rank=i+1);
+const el=(t,c,txt)=>{const e=document.createElement(t);if(c)e.className=c;if(txt!==undefined)e.textContent=txt;return e;};
+const pc=(v,d=2)=>(v*100).toFixed(d)+'%';
+const sg=v=>(v>=0?'+':'')+nf.format(Math.round(v));
+// KPIs
+const kb=document.getElementById('perf-kpis');
+[['Target',nf.format(T.tg),''],['Actual 1–22 พ.ย.',nf.format(T.act),'%ACH '+pc(T.ach)],['GAP to Target',nf.format(T.gap),'ต้องทำเพิ่ม '+nf.format(Math.round(T.gap/(MDAYS-DAYS)))+' /วัน'],
+ ['MoM vs 1–22 ต.ค.',sg(T.mom),pc(T.momp,1),T.mom>=0],['Run Rate สิ้นเดือน',nf.format(Math.round(T.rr)),'%RR '+pc(T.rrp,1)+' ของ Target']].forEach(([l,v,sub,up])=>{
+  const k=el('div','kpi');k.append(el('div','l',l));const V=el('div','v',v);if(up!==undefined)V.className+=' '+(up?'up':'dn');k.append(V);k.append(el('div','s',sub));kb.appendChild(k);});
+// top/bottom
+const li=(r,box)=>{const x=el('li');x.append(document.createTextNode(r.ar));x.append(el('small','',`GAP ${nf.format(r.gap)} · MoM ${(r.momp>=0?'+':'')+pc(r.momp,0)}`));x.append(el('b','',pc(r.ach)));document.getElementById(box).appendChild(x);};
+rk.slice(0,3).forEach(r=>li(r,'perf-top'));rk.slice(-3).reverse().forEach(r=>li(r,'perf-bot'));
+// heat colors
+const heat=v=>v>=.85?'#63be7b':v>=.75?'#a9d27f':v>=.65?'#e9e583':v>=.55?'#fdd17f':v>=.45?'#f8a170':'#f8696b';
+const tbl=document.getElementById('t-perf');const th=el('thead');const hr=el('tr');
+const H=['REGION','AREA','TG Nov','%Con Target','ACT Nov 1–22','%Con Actual','%ACH','GAP','ACT Oct 1–22','MoM','%MoM','RR Rev','%RR','Rank'];
+H.forEach((h,i)=>{const c=el('th',i<2?'':'',h);if(i===1)c.className='name';tbl;hr.appendChild(c);});th.appendChild(hr);tbl.appendChild(th);
+const tb=el('tbody');
+const cells=(tr,r,tot)=>{
+  const add=(t,cls,bg)=>{const c=el('td',cls||'',t);if(bg)c.style.background=bg;tr.appendChild(c);return c;};
+  add(nf.format(r.tg));add(pc(r.tg/T.tg));add(nf.format(r.act));add(pc(r.act/T.act));
+  add(pc(r.ach),'ach',tot?'':heat(r.ach));add(nf.format(r.gap),'',tot?'':'#fde2e2');add(nf.format(r.oct));
+  add(sg(r.mom),r.mom>=0?'up':'dn',tot?'':(r.mom>=0?'#e2f4e8':'#fde2e2'));add((r.momp>=0?'▲ ':'▼ ')+pc(Math.abs(r.momp),0),r.momp>=0?'up':'dn');
+  add(nf.format(Math.round(r.rr)));add(pc(r.rrp,1),'ach',tot?'':heat(r.rrp*0.75));add(tot?'':String(r.rank));};
+rows.forEach(r=>{const tr=el('tr');tr.append(el('td','rg',r.rg));const n=el('td','name',r.ar);tr.append(n);cells(tr,r,false);tb.appendChild(tr);});
+const tt=el('tr','tot');const g=el('td','name','Grand Total');g.colSpan=2;tt.append(g);cells(tt,T,true);tb.appendChild(tt);
+tbl.appendChild(tb);
+})();
 </script>
 </body>
 </html>
