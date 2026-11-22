@@ -52,6 +52,17 @@ table.t.perf td,table.t.perf th{padding:6px 7px}
 table.t.perf th.name,table.t.perf td.name{min-width:170px;position:static}
 table.t.perf td.rg{font-weight:700;text-align:center;color:#146c3e}
 table.t.perf td.ach{font-weight:700}
+.ns-sum{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}
+.ns-pill{border-radius:999px;padding:6px 14px;font-weight:600;font-size:12.5px;background:#f3f5f7;border:1px solid var(--line)}
+.ns-pill.big{background:#fdecea;border-color:#f3c2bb;color:#b4232c}
+.ns-pill b{font-size:15px;margin-left:4px}
+.ns-grid{display:grid;grid-template-columns:minmax(300px,2fr) minmax(320px,3fr);gap:14px}
+@media (max-width:820px){.ns-grid{grid-template-columns:1fr}}
+table.t.ns{min-width:0}
+table.t.ns th.name,table.t.ns td.name{position:static;min-width:0;white-space:normal}
+table.t.ns td.c{text-align:center}
+.typ{display:inline-block;border-radius:999px;padding:1px 9px;font-size:11.5px;font-weight:600}
+.typ.matching{background:#e3f4ea;color:#146c3e}.typ.non_matching{background:#fff1dc;color:#9a5b00}.typ.COCO{background:#e6eefc;color:#2349a8}
 .kpi .l{font-size:12px;color:var(--muted)}
 .kpi .v{font-size:26px;font-weight:700;margin-top:2px}
 .kpi .s{font-size:12.5px;margin-top:2px}
@@ -112,6 +123,15 @@ table.t td.gs{border-left:1px solid var(--line)}
     </div>
     <div class="tscroll"><table class="t perf" id="t-perf"></table></div>
     <div class="note">ที่มา: ตาราง Performance by Area (TG / ACT Nov 1–22 / ACT Oct 1–22) ที่ส่งมาเมื่อ 22 พ.ย. · RR Rev = ACT ÷ 22 × 30 · %RR = RR Rev ÷ Target · Rank เรียงตาม %ACH</div>
+  </div>
+  <div class="card" id="sec-nosale">
+    <div class="sechead"><h2>🚫 No Sale · สาขาที่มี Target แต่ยังไม่มียอดขาย</h2><span class="asof">Data as of 1–22 พ.ย. 2026</span></div>
+    <div class="ns-sum" id="ns-sum"></div>
+    <div class="ns-grid">
+      <div><div class="tscroll"><table class="t ns" id="t-ns-area"></table></div></div>
+      <div><div class="tscroll"><table class="t ns" id="t-ns-shop"></table></div></div>
+    </div>
+    <div class="note">ที่มา: ชีต "Non Sale" ใน Target_by_Model_OPPO_Nov (1).xlsx (สาขาที่มี TG Nov และ Actual Nov = 0)</div>
   </div>
   <div class="kpis" id="kpis"></div>
   <div class="card" id="sec-region">
@@ -337,6 +357,44 @@ const cells=(tr,r,tot)=>{
 rows.forEach(r=>{const tr=el('tr');tr.append(el('td','rg',r.rg));const n=el('td','name',r.ar);tr.append(n);cells(tr,r,false);tb.appendChild(tr);});
 const tt=el('tr','tot');const g=el('td','name','Grand Total');g.colSpan=2;tt.append(g);cells(tt,T,true);tb.appendChild(tt);
 tbl.appendChild(tb);
+})();
+</script>
+
+<script>
+(function(){
+const NS=[
+['BMA V - Central','True Shop Station Tesco Lotus Rama 4','non_matching'],
+['UPC - Central','True Shop Tesco Lotus Bang Pa-In Ayudhaya','non_matching'],
+['UPC - Central Northeast',"True Shop Lotus's Kantharalak (D)",'COCO'],
+['UPC - Central Northeast','True Shop Tesco Lotus Chiangyuen Mahasarakham','non_matching'],
+['UPC - Central Northeast','True Shop Tesco Lotus Borabue Mahasarakham','non_matching'],
+['UPC - East','True Shop Trad','non_matching'],
+['UPC - Lower North','True Shop Robinson Mae Sot','non_matching'],
+['UPC - Lower Northeast','True Shop Big C Chaiyaphum','non_matching'],
+['UPC - Lower Northeast','True Shop Dan Khun Thot Nakhonratchasima','non_matching'],
+['UPC - Lower Northeast','True Shop Sikhoraphum Surin','non_matching'],
+['UPC - Upper North','True Shop Big C Chiangmai','non_matching'],
+['UPC - Upper North','True Shop Central Lampang','matching'],
+['UPC - Upper North','True Shop Maya Chiangmai','non_matching'],
+['UPC - Upper Northeast','True Shop Asawann Phonphisai Nong Khai','non_matching'],
+['UPC - West','True Shop Station Tesco Lotus Pranburi Prachuapkhirikhan','non_matching']];
+const TYPES=['matching','non_matching','COCO'];
+const el=(t,c,txt)=>{const e=document.createElement(t);if(c)e.className=c;if(txt!==undefined)e.textContent=txt;return e;};
+const sum=document.getElementById('ns-sum');
+const p0=el('span','ns-pill big','No Sale ทั้งหมด');p0.append(el('b','',NS.length+' สาขา'));sum.append(p0);
+TYPES.forEach(t=>{const n=NS.filter(r=>r[2]===t).length;const p=el('span','ns-pill',t);p.append(el('b','',String(n)));sum.append(p);});
+// area table
+const ta=document.getElementById('t-ns-area');const th=el('thead');const hr=el('tr');
+[['Area','name'],['matching'],['non_matching'],['COCO'],['รวม']].forEach(([h,c])=>hr.append(el('th',c||'',h)));th.append(hr);ta.append(th);
+const tb=el('tbody');const areas=[...new Set(NS.map(r=>r[0]))];
+areas.forEach(a=>{const tr=el('tr');tr.append(el('td','name',a));TYPES.forEach(t=>{const n=NS.filter(r=>r[0]===a&&r[2]===t).length;tr.append(el('td','c',n?String(n):''));});
+  tr.append(el('td','c',String(NS.filter(r=>r[0]===a).length)));tr.lastChild.style.fontWeight='700';tb.append(tr);});
+const tt=el('tr','tot');tt.append(el('td','name','Grand Total'));TYPES.forEach(t=>tt.append(el('td','c',String(NS.filter(r=>r[2]===t).length))));tt.append(el('td','c',String(NS.length)));tb.append(tt);ta.append(tb);
+// shop table
+const ts=document.getElementById('t-ns-shop');const th2=el('thead');const h2=el('tr');[['Area','name'],['สาขา','name'],['ประเภทร้าน']].forEach(([h,c])=>h2.append(el('th',c||'',h)));th2.append(h2);ts.append(th2);
+const tb2=el('tbody');let last='';
+NS.forEach(([a,sh,t])=>{const tr=el('tr');const ca=el('td','name',a===last?'':a);if(a!==last)ca.style.fontWeight='700';last=a;tr.append(ca);tr.append(el('td','name',sh));const c=el('td','c');c.append(el('span','typ '+t,t));tr.append(c);tb2.append(tr);});
+ts.append(tb2);
 })();
 </script>
 </body>
